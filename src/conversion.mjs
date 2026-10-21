@@ -1,3 +1,4 @@
+import { CURRENCY_PREFIX, currencyAnswer, lookupCurrency } from "./currency.mjs";
 import { evaluate } from "./expression.mjs";
 import { formatNumber } from "./format.mjs";
 import { convertUnit, lookupUnit } from "./units.mjs";
@@ -19,7 +20,7 @@ const BASE_PREFIX = {
     2: "0b"
 };
 
-// "25 GB to MB", "5 in to cm", "255 to hex". The keyword can be "to", "in",
+// "25 GB to MB", "255 to hex", "$20 to cad". The keyword can be "to", "in",
 // "into" or "as".
 export function conversionAnswer(text) {
     // The trailing space is a lookahead so "5 in to cm" yields both cuts.
@@ -44,18 +45,27 @@ function convert(lhs, rhs) {
     if (radix)
         return baseAnswer(lhs, rhs, radix);
 
-    const to = lookupUnit(rhs);
+    const to = lookupUnit(rhs) || lookupCurrency(rhs);
     if (!to)
         return null;
-    // The amount ends at a digit, ")" or "%" and the unit is whatever follows.
-    const parts = /^(.*[\d).%])\s*([^\d\s()][^()]*?)$/.exec(lhs);
-    if (!parts)
+    // The amount ends at a digit, ")" or "%" and the unit is whatever
+    // follows, except for currency symbols, which come first.
+    let amountText, unitText;
+    const prefixed = CURRENCY_PREFIX.exec(lhs);
+    const suffixed = /^(.*[\d).%])\s*([^\d\s()][^()]*?)$/.exec(lhs);
+    if (prefixed)
+        [unitText, amountText] = [prefixed[1], prefixed[2]];
+    else if (suffixed)
+        [amountText, unitText] = [suffixed[1], suffixed[2]];
+    else
         return null;
-    const from = lookupUnit(parts[2]);
-    const amount = evaluate(parts[1]);
+    const from = lookupUnit(unitText) || lookupCurrency(unitText);
+    const amount = evaluate(amountText);
     if (!from || amount === null || from.category !== to.category)
         return null;
 
+    if (to.category === "currency")
+        return currencyAnswer(amount, from, to, lhs);
     const result = formatNumber(convertUnit(amount, from, to));
     if (result === null)
         return null;

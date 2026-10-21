@@ -40,3 +40,24 @@ test("bases", () => {
     assert.equal(title("0xff to decimal"), "255");
     assert.equal(title("1.5 to hex"), null);
 });
+
+test("currency", () => {
+    assert.deepEqual(ask("20 usd to cad"), {
+        title: "27.78 CAD",
+        subtitle: "20 usd · ECB, 2026-10-26",
+        icon: "currency_exchange"
+    });
+    assert.equal(title("$20 to cad"), "27.78 CAD");
+    assert.equal(title("€5 to £"), "4.25 GBP");
+    assert.equal(title("C$20 to usd"), "14.40 USD");
+    assert.equal(title("100 rupees to euros"), "1.11 EUR");
+});
+
+test("currency keeps small amounts visible", () => {
+    assert.equal(title("1 jpy to usd"), "0.00675 USD");
+    assert.equal(title("0 usd to eur"), "0.00 EUR");
+});
+
+test("no answer for currencies without a rate", () => {
+    assert.equal(ask("20 xyz to usd"), null);
+});

@@ -1,6 +1,8 @@
 import { conversionAnswer } from "./conversion.mjs";
 import { mathAnswer } from "./maths.mjs";
 
+export { setRates } from "./currency.mjs";
+
 // Answers for the launcher's search box. Each answerer returns
 // { title, subtitle, icon } or null; answer() returns the first hit, and
 // null for anything else so app searches never grow a junk result.
