@@ -8,11 +8,14 @@ setRates({
     INR: 90
 }, "2026-10-26");
 
-export function ask(query) {
-    return answer(query);
+// Saturday, 24 October 2026, 13:53 UTC.
+export const NOW = new Date(Date.UTC(2026, 9, 24, 13, 53, 20));
+
+export function ask(query, now = NOW) {
+    return answer(query, now);
 }
 
-export function title(query) {
-    const result = answer(query);
+export function title(query, now = NOW) {
+    const result = answer(query, now);
     return result && result.title;
 }

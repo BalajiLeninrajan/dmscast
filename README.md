@@ -9,6 +9,8 @@ A [DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell) launcher
 | `25 GB to MB`, `5 miles to km`, `100 f to c`, `5 in to cm` | `25000 MB` |
 | `0xff to decimal`, `255 to hex` | `255` |
 | `20 usd to cad`, `$20 to cad`, `€5 to £` | `28.10 CAD` |
+| `days until october 8`, `days since january 1` | `352 days` |
+| `30 days from now`, `2 weeks ago`, `in 3 months` | `Friday, 20 November 2026` |
 
 Results show up alongside app search with no prefix. Type `=` first to see only calculator results.
 
@@ -35,6 +37,7 @@ DMS lists plugin results below applications, so Enter launches a matching app in
 |---|---|
 | `maths.mjs`, `expression.mjs` | arithmetic and percentages |
 | `conversion.mjs`, `units.mjs`, `currency.mjs` | `X to Y` for units, bases and currencies |
+| `dates.mjs`, `calendar.mjs` | days until and since, spans from today |
 
 The same modules run under Node, so the tests do too:
 

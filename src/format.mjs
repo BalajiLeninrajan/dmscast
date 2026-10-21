@@ -12,3 +12,11 @@ export function formatNumber(x) {
         return r.toExponential().replace(/\.?0+e/, "e");
     return String(r);
 }
+
+export function plural(n, unit) {
+    return n + " " + unit + (n === 1 ? "" : "s");
+}
+
+export function capitalize(word) {
+    return word.charAt(0).toUpperCase() + word.slice(1);
+}
