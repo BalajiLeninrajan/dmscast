@@ -16,6 +16,8 @@ Link or clone this repo into the plugins directory, then enable **dmscast** unde
 git clone https://github.com/BalajiLeninrajan/dmscast ~/.config/DankMaterialShell/plugins/dmscast
 ```
 
+DMS lists plugin results below applications, so Enter launches a matching app instead of copying the answer. The plugin asks to be ranked first through a `sectionPriority` field in `plugin.json`, which stock DMS 1.6 ignores. Until DMS reads it, results still show up, just under the apps.
+
 ## Where answers come from
 
 - Arithmetic and percentages are parsed in `src/`. Nothing calls `eval`. Numbers are 64-bit floats shown to 10 significant digits.

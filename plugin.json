@@ -10,6 +10,7 @@
     "capabilities": ["launcher", "clipboard"],
     "component": "./Dmscast.qml",
     "trigger": "=",
+    "sectionPriority": 0.5,
     "requires_dms": ">=1.6.0",
     "permissions": []
 }
