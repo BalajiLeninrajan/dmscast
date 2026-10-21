@@ -2,7 +2,24 @@ import { evaluate } from "./expression.mjs";
 import { formatNumber } from "./format.mjs";
 import { convertUnit, lookupUnit } from "./units.mjs";
 
-// "25 GB to MB", "5 in to cm". The keyword can be "to", "in",
+const BASES = {
+    dec: 10,
+    decimal: 10,
+    hex: 16,
+    hexadecimal: 16,
+    bin: 2,
+    binary: 2,
+    oct: 8,
+    octal: 8
+};
+
+const BASE_PREFIX = {
+    16: "0x",
+    8: "0o",
+    2: "0b"
+};
+
+// "25 GB to MB", "5 in to cm", "255 to hex". The keyword can be "to", "in",
 // "into" or "as".
 export function conversionAnswer(text) {
     // The trailing space is a lookahead so "5 in to cm" yields both cuts.
@@ -23,6 +40,10 @@ export function conversionAnswer(text) {
 }
 
 function convert(lhs, rhs) {
+    const radix = BASES[rhs.toLowerCase()];
+    if (radix)
+        return baseAnswer(lhs, rhs, radix);
+
     const to = lookupUnit(rhs);
     if (!to)
         return null;
@@ -42,5 +63,23 @@ function convert(lhs, rhs) {
         title: result + " " + (to.temp ? to.temp.symbol : rhs),
         subtitle: lhs + " =",
         icon: to.temp ? "thermostat" : "swap_horiz"
+    };
+}
+
+function baseAnswer(lhs, rhs, radix) {
+    const value = evaluate(lhs);
+    if (value === null)
+        return null;
+    let result;
+    if (radix === 10)
+        result = formatNumber(value);
+    else if (Math.floor(value) === value && Math.abs(value) <= Number.MAX_SAFE_INTEGER)
+        result = (value < 0 ? "-" : "") + BASE_PREFIX[radix] + Math.abs(value).toString(radix);
+    else
+        return null;
+    return result === null ? null : {
+        title: result,
+        subtitle: lhs + " in " + rhs.toLowerCase(),
+        icon: "tag"
     };
 }

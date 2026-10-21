@@ -7,6 +7,7 @@ A [DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell) launcher
 | `1920 * 0.85`, `2pi`, `1,000,000 / 4`, `5!` | `1632` |
 | `15% of 240`, `240 + 15%`, `20 as a % of 80`, `25% off 80` | `36` |
 | `25 GB to MB`, `5 miles to km`, `100 f to c`, `5 in to cm` | `25000 MB` |
+| `0xff to decimal`, `255 to hex` | `255` |
 
 Results show up alongside app search with no prefix. Type `=` first to see only calculator results.
 
@@ -22,7 +23,7 @@ DMS lists plugin results below applications, so Enter launches a matching app in
 
 ## Where answers come from
 
-- Arithmetic, percentages and units are parsed in `src/`. Nothing calls `eval`. Numbers are 64-bit floats shown to 10 significant digits.
+- Arithmetic, percentages, units and bases are parsed in `src/`. Nothing calls `eval`. Numbers are 64-bit floats shown to 10 significant digits.
 
 ## Development
 
@@ -31,7 +32,7 @@ DMS lists plugin results below applications, so Enter launches a matching app in
 | Module | Answers |
 |---|---|
 | `maths.mjs`, `expression.mjs` | arithmetic and percentages |
-| `conversion.mjs`, `units.mjs` | `X to Y` for units |
+| `conversion.mjs`, `units.mjs` | `X to Y` for units and bases |
 
 The same modules run under Node, so the tests do too:
 

@@ -32,3 +32,11 @@ test("temperatures", () => {
 test("no answer across categories", () => {
     assert.equal(ask("5 kg to km"), null);
 });
+
+test("bases", () => {
+    assert.equal(title("255 to hex"), "0xff");
+    assert.equal(title("255 to binary"), "0b11111111");
+    assert.equal(title("-255 to hex"), "-0xff");
+    assert.equal(title("0xff to decimal"), "255");
+    assert.equal(title("1.5 to hex"), null);
+});
