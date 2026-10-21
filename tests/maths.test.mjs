@@ -61,3 +61,11 @@ test("percentages", () => {
     assert.equal(title("240 - 15%"), "204");
     assert.equal(title("10 % 3"), "1");
 });
+
+test("percentage phrases", () => {
+    assert.equal(title("20 as a % of 80"), "25%");
+    assert.equal(title("20 is what % of 80"), "25%");
+    assert.equal(title("20 is 25% of what"), "80");
+    assert.equal(title("25% off 80"), "60");
+    assert.equal(title("10% on 200"), "220");
+});

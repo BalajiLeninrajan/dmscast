@@ -5,6 +5,7 @@ A [DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell) launcher
 | Type | Get |
 |---|---|
 | `1920 * 0.85`, `2pi`, `1,000,000 / 4`, `5!` | `1632` |
+| `15% of 240`, `240 + 15%`, `20 as a % of 80`, `25% off 80` | `36` |
 
 Results show up alongside app search with no prefix. Type `=` first to see only calculator results.
 
