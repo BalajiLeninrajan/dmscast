@@ -1,4 +1,4 @@
-# dms-spotlight-calc
+# dmscast
 
 A [DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell) launcher plugin that answers questions as you type, in the style of Raycast's calculator. Enter copies the answer and Shift+Enter pastes it.
 
@@ -18,10 +18,10 @@ Results show up alongside app search with no prefix. Type `=` first to see only 
 
 ## Setup
 
-Link or clone this repo into the plugins directory, then enable **Calculator** under Settings → Plugins:
+Link or clone this repo into the plugins directory, then enable **dmscast** under Settings → Plugins:
 
 ```sh
-git clone https://github.com/BalajiLeninrajan/dms-spotlight-calc ~/.config/DankMaterialShell/plugins/spotlightCalc
+git clone https://github.com/BalajiLeninrajan/dmscast ~/.config/DankMaterialShell/plugins/dmscast
 ```
 
 DMS lists plugin results below applications, so Enter launches a matching app instead of copying the answer. The plugin asks to be ranked first through a `sectionPriority` field in `plugin.json`, which stock DMS 1.6 ignores. Until DMS reads it, results still show up, just under the apps.

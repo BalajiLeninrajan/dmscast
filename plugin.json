@@ -1,6 +1,6 @@
 {
-    "id": "spotlightCalc",
-    "name": "Calculator",
+    "id": "dmscast",
+    "name": "dmscast",
     "description": "Inline maths, percentages, unit, base and currency conversion, dates and time zones in the launcher",
     "version": "0.1.0",
     "license": "MIT",
@@ -8,7 +8,7 @@
     "icon": "calculate",
     "type": "launcher",
     "capabilities": ["launcher", "clipboard"],
-    "component": "./SpotlightCalc.qml",
+    "component": "./Dmscast.qml",
     "trigger": "=",
     "sectionPriority": 0.5,
     "requires_dms": ">=1.6.0",

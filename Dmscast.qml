@@ -12,7 +12,7 @@ QtObject {
 
     signal itemsChanged
 
-    readonly property string pluginId: "spotlightCalc"
+    readonly property string pluginId: "dmscast"
     readonly property double ratesMaxAge: 6 * 3600 * 1000
     readonly property double retryDelay: 5 * 60 * 1000
 
