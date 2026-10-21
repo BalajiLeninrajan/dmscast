@@ -1,0 +1,15 @@
+{
+    "id": "dmscast",
+    "name": "dmscast",
+    "description": "Inline maths, percentages, unit, base and currency conversion, dates and time zones in the launcher",
+    "version": "0.1.0",
+    "license": "MIT",
+    "author": "Balaji Leninrajan",
+    "icon": "calculate",
+    "type": "launcher",
+    "capabilities": ["launcher", "clipboard"],
+    "component": "./Dmscast.qml",
+    "trigger": "=",
+    "requires_dms": ">=1.6.0",
+    "permissions": []
+}
