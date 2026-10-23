@@ -1,5 +1,5 @@
 import fs from "node:fs";
-import { answer, setRates } from "../src/answer.mjs";
+import { answer, setFileReader, setRates } from "../src/answer.mjs";
 
 // Same contract as the plugin's FileView reader.
 export function read(path, binary) {
@@ -11,6 +11,7 @@ export function read(path, binary) {
     }
 }
 
+setFileReader(read);
 setRates({
     USD: 1.08,
     CAD: 1.5,

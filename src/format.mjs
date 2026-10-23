@@ -17,6 +17,10 @@ export function plural(n, unit) {
     return n + " " + unit + (n === 1 ? "" : "s");
 }
 
+export function pad2(n) {
+    return (n < 10 ? "0" : "") + n;
+}
+
 export function capitalize(word) {
     return word.charAt(0).toUpperCase() + word.slice(1);
 }

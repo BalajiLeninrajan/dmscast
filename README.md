@@ -11,6 +11,8 @@ A [DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell) launcher
 | `20 usd to cad`, `$20 to cad`, `€5 to £` | `28.10 CAD` |
 | `days until october 8`, `days since january 1` | `352 days` |
 | `30 days from now`, `2 weeks ago`, `in 3 months` | `Friday, 20 November 2026` |
+| `time in tokyo`, `new york time`, `time in japan` | `10:13 PM JST` |
+| `3pm pst to london`, `9am ist`, `noon utc to est` | `11:00 PM BST` |
 
 Results show up alongside app search with no prefix. Type `=` first to see only calculator results.
 
@@ -28,16 +30,18 @@ DMS lists plugin results below applications, so Enter launches a matching app in
 
 - Arithmetic, percentages, units and bases are parsed in `src/`. Nothing calls `eval`. Numbers are 64-bit floats shown to 10 significant digits.
 - Currency uses the European Central Bank's daily reference rates from [Frankfurter](https://frankfurter.dev), 30 currencies, refreshed every 6 hours. The last rates are kept for offline use.
+- Times are read from the system tz database, the same files `date` uses, so daylight saving stays as current as the system. Zone cities (`new york`) and countries (`japan`) come from its `zone.tab` and `iso3166.tab`. The tz files load the first time a query names a place.
 
 ## Development
 
-`Dmscast.qml` is the plugin: it hands queries to `src/answer.mjs`, copies answers and fetches currency rates. Everything in `src/` is plain JavaScript with no QML, one module per kind of answer:
+`Dmscast.qml` is the plugin: it hands queries to `src/answer.mjs`, copies answers, fetches currency rates and reads files for the modules. Everything in `src/` is plain JavaScript with no QML, one module per kind of answer:
 
 | Module | Answers |
 |---|---|
 | `maths.mjs`, `expression.mjs` | arithmetic and percentages |
 | `conversion.mjs`, `units.mjs`, `currency.mjs` | `X to Y` for units, bases and currencies |
 | `dates.mjs`, `calendar.mjs` | days until and since, spans from today |
+| `times.mjs`, `zones.mjs`, `tzif.mjs` | clock times, and the zone a place name means |
 
 The same modules run under Node, so the tests do too:
 

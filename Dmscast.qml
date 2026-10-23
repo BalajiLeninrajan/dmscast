@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import qs.Services
 import "src/answer.mjs" as Calc
 
@@ -22,7 +23,17 @@ QtObject {
         })
     property double fiatTriedAt: 0
 
-    Component.onCompleted: loadRates()
+    // Reads tz files the first time a query needs them.
+    property var reader: FileView {
+        preload: false
+        blockLoading: true
+        printErrors: false
+    }
+
+    Component.onCompleted: {
+        Calc.setFileReader(readFile);
+        loadRates();
+    }
     onPluginServiceChanged: loadRates()
 
     function getItems(query) {
@@ -53,7 +64,15 @@ QtObject {
         };
     }
 
-    // ------------------------------------------------------------ currency rates
+    // ------------------------------------------------------------ reference data
+
+    function readFile(path, binary) {
+        reader.path = path;
+        const content = binary ? reader.data() : reader.text();
+        // Drop the reader's copy; calc.js keeps what it needs.
+        reader.path = "";
+        return content;
+    }
 
     function loadRates() {
         if (!pluginService)
