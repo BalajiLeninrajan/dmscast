@@ -1,9 +1,8 @@
 .pragma library
 
 // Inline answers for the spotlight search box: arithmetic, percentages, unit,
-// currency and base conversion, and calendar arithmetic. answer() returns null
-// for anything else, so app searches never grow a junk result. Time zones need
-// `date` for DST rules, so timeQuery() only describes the command to run.
+// currency and base conversion, calendar arithmetic and time zones. answer()
+// returns null for anything else, so app searches never grow a junk result.
 
 const DAY_MS = 86400000;
 const MONTHS = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
@@ -25,7 +24,8 @@ function answer(query, now) {
     const text = String(query || "").trim();
     if (text.length < 2)
         return null;
-    return dateAnswer(text, now || new Date()) || conversionAnswer(text) || mathAnswer(text);
+    now = now || new Date();
+    return dateAnswer(text, now) || conversionAnswer(text) || mathAnswer(text) || timeAnswer(text, now);
 }
 
 // ---------------------------------------------------------------- numbers
@@ -912,7 +912,7 @@ function dateAnswer(raw, now) {
 // ---------------------------------------------------------------- time zones
 
 // Time zone abbreviations and nicknames. Cities and airport codes come from
-// data/places.tsv and countries from the system's iso3166.tab, via setZones().
+// data/places.tsv and countries from the system's iso3166.tab.
 const ZONE_ALIASES = {
     utc: "UTC",
     gmt: "UTC",
@@ -987,41 +987,87 @@ const COUNTRY_DEFAULTS = {
     NZ: "Pacific/Auckland"
 };
 
-let zoneNames = {};
-let placeNames = {};
-let localZone = "";
+// Files are read on first use through the plugin's reader: read(path, binary)
+// returns the text, or an ArrayBuffer when binary is set, and "" for a
+// missing file. Queries that never mention a place never load anything.
+let readFile = null;
+let placesPath = "";
 
-// localName is the system zone ("America/Toronto"). `date -d 15:00` reads the
-// time in $TZ, so "3pm to berlin" has to name the local zone explicitly.
-function setZones(zoneTab, isoTab, localName, placesTsv) {
-    localZone = localName || "";
-    const places = {};
-    for (const line of String(placesTsv || "").split("\n")) {
-        const tab = line.indexOf("\t");
-        if (tab > 0 && line[0] !== "#")
-            places[line.slice(0, tab)] = line.slice(tab + 1);
+function setFileReader(read, places) {
+    readFile = read;
+    placesPath = places;
+}
+
+function own(table, key) {
+    return Object.prototype.hasOwnProperty.call(table, key) ? table[key] : null;
+}
+
+// data/places.tsv stays one string and is binary-searched. An object with
+// 62,000 keys took half a second to build and several times the memory.
+let placesText = null;
+let placeZones = [];
+let placesStart = 0;
+
+function lookupPlace(name) {
+    if (placesText === null) {
+        const text = readFile ? String(readFile(placesPath, false) || "") : "";
+        let start = 0;
+        while (text[start] === "#") {
+            const nl = text.indexOf("\n", start);
+            start = nl < 0 ? text.length : nl + 1;
+        }
+        let end = text.indexOf("\n", start);
+        if (end < 0)
+            end = text.length;
+        placeZones = text.slice(start, end).split("\t");
+        placesStart = end + 1;
+        placesText = text;
     }
-    placeNames = places;
-    const names = {};
-    const byCountry = {};
-    for (const line of String(zoneTab || "").split("\n")) {
-        if (!line || line[0] === "#")
-            continue;
-        const cols = line.split("\t");
-        if (!cols[2])
-            continue;
-        names[cols[2].split("/").pop().replace(/_/g, " ").toLowerCase()] = cols[2];
-        (byCountry[cols[0]] = byCountry[cols[0]] || []).push(cols[2]);
+    const text = placesText;
+    let lo = placesStart;
+    let hi = text.length;
+    // lo and hi always sit at the start of a line.
+    while (lo < hi) {
+        const start = text.lastIndexOf("\n", ((lo + hi) >> 1) - 1) + 1;
+        let end = text.indexOf("\n", start);
+        if (end < 0)
+            end = text.length;
+        let tab = text.indexOf("\t", start);
+        if (tab < 0 || tab > end)
+            tab = end;
+        const key = text.slice(start, tab);
+        if (key === name)
+            return placeZones[+text.slice(tab + 1, end)] || null;
+        if (key < name)
+            lo = end + 1;
+        else
+            hi = start;
     }
-    for (const line of String(isoTab || "").split("\n")) {
-        if (!line || line[0] === "#")
-            continue;
-        const cols = line.split("\t");
-        const zones = byCountry[cols[0]];
-        if (zones && cols[1])
-            names[cols[1].toLowerCase()] = COUNTRY_DEFAULTS[cols[0]] || zones[0];
+    return null;
+}
+
+let zoneNames = null;
+
+// Zone cities ("new york") and country names ("japan") from the system's
+// zone.tab and iso3166.tab.
+function lookupZoneName(name) {
+    if (zoneNames === null) {
+        zoneNames = {};
+        const byCountry = {};
+        const rows = path => String((readFile && readFile(path, false)) || "").split("\n").filter(line => line && line[0] !== "#").map(line => line.split("\t"));
+        for (const cols of rows("/usr/share/zoneinfo/zone.tab")) {
+            if (!cols[2])
+                continue;
+            zoneNames[cols[2].split("/").pop().replace(/_/g, " ").toLowerCase()] = cols[2];
+            (byCountry[cols[0]] = byCountry[cols[0]] || []).push(cols[2]);
+        }
+        for (const cols of rows("/usr/share/zoneinfo/iso3166.tab")) {
+            const zones = byCountry[cols[0]];
+            if (zones && cols[1])
+                zoneNames[cols[1].toLowerCase()] = COUNTRY_DEFAULTS[cols[0]] || zones[0];
+        }
     }
-    zoneNames = names;
+    return own(zoneNames, name);
 }
 
 // "" means the local zone; null means not a place.
@@ -1029,8 +1075,203 @@ function lookupZone(raw) {
     const name = raw.trim().replace(/^the /, "");
     if (name === "local" || name === "here" || name === "local time")
         return "";
-    return ZONE_ALIASES[name] || placeNames[name] || zoneNames[name] || null;
+    return own(ZONE_ALIASES, name) || lookupPlace(name) || lookupZoneName(name);
 }
+
+// ---------------------------------------------------------------- zone rules
+
+// Zone rules come from the system tz database, the same TZif files `date`
+// reads, so daylight saving stays as current as the system. Each zone is
+// parsed once, on first use.
+const zoneCache = {};
+
+function loadZone(zone) {
+    const path = zone ? "/usr/share/zoneinfo/" + zone : "/etc/localtime";
+    if (!Object.prototype.hasOwnProperty.call(zoneCache, path))
+        zoneCache[path] = readFile ? parseTzif(readFile(path, true), Date.now() / 1000) : null;
+    return zoneCache[path];
+}
+
+function tzifCounts(view, at) {
+    const count = i => view.getUint32(at + 20 + 4 * i);
+    return {
+        isut: count(0),
+        isstd: count(1),
+        leap: count(2),
+        time: count(3),
+        type: count(4),
+        chars: count(5)
+    };
+}
+
+// RFC 8536: a list of transition times, the UTC offset and abbreviation in
+// force after each, and a POSIX TZ string for times past the last one.
+// Queries are about today, so transitions more than a year old are dropped.
+function parseTzif(buffer, now) {
+    if (!buffer || !buffer.byteLength || buffer.byteLength < 44)
+        return null;
+    const view = new DataView(buffer);
+    if (view.getUint32(0) !== 0x545a6966)
+        return null;
+    try {
+        let header = 0;
+        let size = 4;
+        let n = tzifCounts(view, 0);
+        // Version 2 and later repeat the data with 64-bit times.
+        if (view.getUint8(4) >= 0x32) {
+            header = 44 + n.time * 5 + n.type * 6 + n.chars + n.leap * 8 + n.isstd + n.isut;
+            n = tzifCounts(view, header);
+            size = 8;
+        }
+        let p = header + 44;
+        const times = [];
+        for (let i = 0; i < n.time; i++, p += size)
+            times.push(size === 8 ? view.getInt32(p) * 4294967296 + view.getUint32(p + 4) : view.getInt32(p));
+        const typeOf = [];
+        for (let i = 0; i < n.time; i++)
+            typeOf.push(view.getUint8(p++));
+        const typesAt = p;
+        p += n.type * 6;
+        let chars = "";
+        for (let i = 0; i < n.chars; i++)
+            chars += String.fromCharCode(view.getUint8(p++));
+        const types = [];
+        for (let i = 0; i < n.type; i++) {
+            const at = typesAt + i * 6;
+            const abbr = view.getUint8(at + 5);
+            const nul = chars.indexOf("\0", abbr);
+            types.push({
+                offset: view.getInt32(at),
+                name: chars.slice(abbr, nul < 0 ? chars.length : nul)
+            });
+        }
+        p += n.leap * (size + 4) + n.isstd + n.isut;
+        let footer = "";
+        if (size === 8 && p < buffer.byteLength && view.getUint8(p) === 10) {
+            for (p++; p < buffer.byteLength && view.getUint8(p) !== 10; p++)
+                footer += String.fromCharCode(view.getUint8(p));
+        }
+
+        let first = 0;
+        while (first < times.length && times[first] < now - 366 * 86400)
+            first++;
+        return {
+            times: times.slice(first),
+            types: typeOf.slice(first).map(i => types[i]),
+            before: first > 0 ? types[typeOf[first - 1]] : types[0],
+            last: times.length ? times[times.length - 1] : -Infinity,
+            rule: parsePosixTz(footer)
+        };
+    } catch (e) {
+        // A truncated file reads past the end of the buffer.
+        return null;
+    }
+}
+
+const POSIX_TZ = /^(<[^>]*>|[A-Za-z]{3,})([+-]?[\d:]+)(?:(<[^>]*>|[A-Za-z]{3,})([+-]?[\d:]+)?,([^,]+),([^,]+))?$/;
+const POSIX_RULE = /^(?:M(\d+)\.(\d)\.(\d)|J(\d+)|(\d+))(?:\/([+-]?[\d:]+))?$/;
+
+function hms(text) {
+    const sign = text[0] === "-" ? -1 : 1;
+    const parts = text.replace(/^[+-]/, "").split(":");
+    return sign * (parts[0] * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0) * 1);
+}
+
+function posixRule(text) {
+    const m = POSIX_RULE.exec(text);
+    if (!m)
+        return null;
+    return {
+        month: +(m[1] || 0),
+        week: +(m[2] || 0),
+        weekday: +(m[3] || 0),
+        julian: +(m[4] || 0),
+        day: +(m[5] || 0),
+        time: m[6] ? hms(m[6]) : 7200
+    };
+}
+
+// "EST5EDT,M3.2.0,M11.1.0": offsets count hours west of UTC, and daylight
+// saving starts and ends on the given days at the given local times.
+function parsePosixTz(text) {
+    const m = POSIX_TZ.exec(text);
+    if (!m)
+        return null;
+    const std = {
+        name: m[1].replace(/[<>]/g, ""),
+        offset: -hms(m[2])
+    };
+    if (!m[3])
+        return {
+            std: std,
+            dst: null
+        };
+    const start = posixRule(m[5]);
+    const end = posixRule(m[6]);
+    if (!start || !end)
+        return null;
+    return {
+        std: std,
+        dst: {
+            name: m[3].replace(/[<>]/g, ""),
+            offset: m[4] ? -hms(m[4]) : std.offset + 3600
+        },
+        start: start,
+        end: end
+    };
+}
+
+function ruleDay(year, rule) {
+    if (rule.month) {
+        const first = dayOf(year, rule.month, 1);
+        const weekday = ((first + 4) % 7 + 7) % 7;
+        let day = first + (rule.weekday - weekday + 7) % 7 + (rule.week - 1) * 7;
+        // Week 5 means the last one, which may be the fourth.
+        if (day - first >= daysInMonth(year, rule.month))
+            day -= 7;
+        return day;
+    }
+    const jan1 = dayOf(year, 1, 1);
+    if (rule.julian)
+        return jan1 + rule.julian - 1 + (rule.julian >= 60 && daysInMonth(year, 2) === 29 ? 1 : 0);
+    return jan1 + rule.day;
+}
+
+function posixAt(rule, t) {
+    if (!rule.dst)
+        return rule.std;
+    const year = new Date((t + rule.std.offset) * 1000).getUTCFullYear();
+    const start = ruleDay(year, rule.start) * 86400 + rule.start.time - rule.std.offset;
+    const end = ruleDay(year, rule.end) * 86400 + rule.end.time - rule.dst.offset;
+    // Southern zones, and Dublin's winter "daylight saving", wrap the year.
+    const dst = start < end ? t >= start && t < end : t >= start || t < end;
+    return dst ? rule.dst : rule.std;
+}
+
+// The offset and abbreviation in force at t, in seconds since the epoch.
+function zoneAt(zone, t) {
+    if (zone.rule && t >= zone.last)
+        return posixAt(zone.rule, t);
+    let lo = 0;
+    let hi = zone.times.length;
+    while (lo < hi) {
+        const mid = (lo + hi) >> 1;
+        if (zone.times[mid] <= t)
+            lo = mid + 1;
+        else
+            hi = mid;
+    }
+    return lo ? zone.types[lo - 1] : zone.before;
+}
+
+// When the clock in `zone` reads hour:minute on `day`.
+function wallToUtc(zone, day, hour, minute) {
+    const wall = day * 86400 + hour * 3600 + minute * 60;
+    const guess = wall - zoneAt(zone, wall).offset;
+    return wall - zoneAt(zone, guess).offset;
+}
+
+// ---------------------------------------------------------------- times
 
 function titleCase(text) {
     return text.length <= 4 ? text.toUpperCase() : text.replace(/\b[a-z]/g, c => c.toUpperCase());
@@ -1039,28 +1280,39 @@ function titleCase(text) {
 // "3pm", "3:30 pm", "15:00", "noon". A bare "3" is too ambiguous to be a time.
 function parseClock(text) {
     if (text === "noon")
-        return "12:00";
+        return {
+            hour: 12,
+            minute: 0
+        };
     if (text === "midnight")
-        return "00:00";
+        return {
+            hour: 0,
+            minute: 0
+        };
     const m = /^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/.exec(text);
     if (!m || (!m[2] && !m[3]))
         return null;
-    let h = +m[1];
-    const min = m[2] ? +m[2] : 0;
+    let hour = +m[1];
+    const minute = m[2] ? +m[2] : 0;
     if (m[3]) {
-        if (h < 1 || h > 12)
+        if (hour < 1 || hour > 12)
             return null;
-        h = h % 12 + (m[3] === "pm" ? 12 : 0);
+        hour = hour % 12 + (m[3] === "pm" ? 12 : 0);
     }
-    if (h > 23 || min > 59)
+    if (hour > 23 || minute > 59)
         return null;
-    return (h < 10 ? "0" : "") + h + ":" + (min < 10 ? "0" : "") + min;
+    return {
+        hour: hour,
+        minute: minute
+    };
 }
 
-// Recognises "time in tokyo", "tokyo time", "3pm pst to london" and
-// "3pm london". Returns the `date` command to run and how to label its
-// output, or null.
-function timeQuery(raw) {
+function pad2(n) {
+    return (n < 10 ? "0" : "") + n;
+}
+
+// Answers "time in tokyo", "tokyo time", "3pm pst to london" and "3pm london".
+function timeAnswer(raw, now) {
     const text = raw.trim().toLowerCase().replace(/\s+/g, " ").replace(/\?$/, "");
     let from = "", to = "", at = null, label = "";
 
@@ -1084,26 +1336,22 @@ function timeQuery(raw) {
         label = (from ? titleCase(fromName) : "Local") + " → " + (to ? titleCase(toName) : "local time");
     }
 
-    const command = to ? ["env", "TZ=" + to, "date"] : ["date"];
-    const source = from || localZone;
-    if (at)
-        command.push("-d", (source ? 'TZ="' + source + '" ' : "") + at);
-    command.push("+%-I:%M %p %Z|%A, %-d %B");
-    return {
-        command: command,
-        label: label,
-        live: !at
-    };
-}
-
-// Turns the `date` output for a timeQuery() into a result.
-function timeAnswer(spec, output) {
-    const parts = String(output).trim().split("|");
-    if (parts.length !== 2)
+    const target = loadZone(to);
+    const source = at ? loadZone(from) : null;
+    if (!target || (at && !source))
         return null;
+    let t = now.getTime() / 1000;
+    if (at) {
+        const local = new Date((t + zoneAt(source, t).offset) * 1000);
+        t = wallToUtc(source, dayOf(local.getUTCFullYear(), local.getUTCMonth() + 1, local.getUTCDate()), at.hour, at.minute);
+    }
+    const type = zoneAt(target, t);
+    const d = new Date((t + type.offset) * 1000);
+    const hour = d.getUTCHours();
+    const month = MONTHS[d.getUTCMonth()];
     return {
-        title: parts[0],
-        subtitle: parts[1] + " · " + spec.label,
+        title: (hour % 12 || 12) + ":" + pad2(d.getUTCMinutes()) + " " + (hour < 12 ? "AM" : "PM") + " " + type.name,
+        subtitle: WEEKDAYS[d.getUTCDay()] + ", " + d.getUTCDate() + " " + month.charAt(0).toUpperCase() + month.slice(1) + " · " + label,
         icon: "schedule"
     };
 }

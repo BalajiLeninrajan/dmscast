@@ -23,64 +23,24 @@ QtObject {
         })
     property double fiatTriedAt: 0
 
-    property string localZone: ""
-
-    // Answers that needed a process, keyed by query. getItems() returns
-    // nothing at first and the launcher re-queries once the process exits.
-    property var asyncAnswers: ({})
-    property var pending: null
-
-    property var zoneTab: FileView {
-        path: "/usr/share/zoneinfo/zone.tab"
+    // Reads the place table and tz files the first time a query needs them.
+    property var reader: FileView {
+        preload: false
+        blockLoading: true
         printErrors: false
-        onLoaded: root.loadZones()
     }
 
-    property var placesFile: FileView {
-        path: Qt.resolvedUrl("data/places.tsv").toString().replace("file://", "")
-        printErrors: false
-        onLoaded: root.loadZones()
+    Component.onCompleted: {
+        Calc.setFileReader(readFile, Qt.resolvedUrl("data/places.tsv").toString().replace("file://", ""));
+        loadRates();
     }
-
-    property var isoTab: FileView {
-        path: "/usr/share/zoneinfo/iso3166.tab"
-        printErrors: false
-        onLoaded: root.loadZones()
-    }
-
-    property var localZoneProc: Process {
-        command: ["timedatectl", "show", "-p", "Timezone", "--value"]
-        running: true
-        stdout: StdioCollector {
-            onStreamFinished: {
-                root.localZone = text.trim();
-                root.loadZones();
-            }
-        }
-    }
-
-    property var asyncProc: Process {
-        property string query: ""
-        property var spec: null
-
-        stdout: StdioCollector {
-            onStreamFinished: root.finishAsync(root.asyncProc.query, root.asyncProc.spec, text)
-        }
-    }
-
-    Component.onCompleted: loadRates()
     onPluginServiceChanged: loadRates()
 
     function getItems(query) {
         refreshRates();
         const text = String(query || "").trim();
-        const answer = Calc.answer(text, new Date()) || cachedAnswer(text);
-        if (answer)
-            return [toItem(answer)];
-        const spec = asyncSpec(text);
-        if (spec)
-            runAsync(text, spec);
-        return [];
+        const answer = Calc.answer(text, new Date());
+        return answer ? [toItem(answer)] : [];
     }
 
     function executeItem(item) {
@@ -104,60 +64,14 @@ QtObject {
         };
     }
 
-    // ------------------------------------------------------------ async answers
-
-    function asyncSpec(text) {
-        return Calc.timeQuery(text);
-    }
-
-    function cachedAnswer(text) {
-        const hit = asyncAnswers[text];
-        if (!hit)
-            return null;
-        // "time in tokyo" goes stale; a converted "3pm pst" doesn't.
-        if (hit.live && Date.now() - hit.at > 20000)
-            return null;
-        return hit.answer;
-    }
-
-    function runAsync(text, spec) {
-        if (asyncProc.running) {
-            pending = {
-                text: text,
-                spec: spec
-            };
-            return;
-        }
-        asyncProc.query = text;
-        asyncProc.spec = spec;
-        asyncProc.command = spec.command;
-        asyncProc.running = true;
-    }
-
-    function finishAsync(text, spec, output) {
-        const answer = Calc.timeAnswer(spec, output);
-
-        const answers = Object.keys(asyncAnswers).length > 200 ? {} : Object.assign({}, asyncAnswers);
-        answers[text] = {
-            answer: answer,
-            live: spec.live,
-            at: Date.now()
-        };
-        asyncAnswers = answers;
-        if (answer && pluginService)
-            pluginService.requestLauncherUpdate(pluginId);
-
-        const next = pending;
-        pending = null;
-        if (next && next.text !== text)
-            runAsync(next.text, next.spec);
-    }
-
     // ------------------------------------------------------------ reference data
 
-    function loadZones() {
-        if (zoneTab.loaded && isoTab.loaded && placesFile.loaded)
-            Calc.setZones(zoneTab.text(), isoTab.text(), localZone, placesFile.text());
+    function readFile(path, binary) {
+        reader.path = path;
+        const content = binary ? reader.data() : reader.text();
+        // Drop the reader's copy; calc.js keeps what it needs.
+        reader.path = "";
+        return content;
     }
 
     function loadRates() {
