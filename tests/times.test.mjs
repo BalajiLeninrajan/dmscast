@@ -36,3 +36,10 @@ test("no answer for things that aren't times", () => {
     for (const query of ["3 tokyo", "25:00 utc", "13pm utc", "9am est to est", "constructor time", "toString time", "time in nowhereville"])
         assert.equal(ask(query), null, query);
 });
+
+test("cities and airport codes from the place table", () => {
+    assert.equal(title("time in medan"), "8:53 PM WIB");
+    assert.equal(title("time in syd"), "12:53 AM AEDT");
+    assert.equal(title("time in waterloo"), "9:53 AM EDT");
+    assert.equal(title("15:00 tokyo to waterloo"), "2:00 AM EDT");
+});

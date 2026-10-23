@@ -1,10 +1,11 @@
 import { readBinary, readText } from "./files.mjs";
+import { lookupPlace } from "./places.mjs";
 import { parseTzif } from "./tzif.mjs";
 
 const ZONEINFO = "/usr/share/zoneinfo/";
 
-// Time zone abbreviations and nicknames. Zone cities and countries come from
-// the system's zone.tab and iso3166.tab.
+// Time zone abbreviations and nicknames. Cities and airport codes come from
+// data/places.tsv and countries from the system's iso3166.tab.
 const ZONE_ALIASES = {
     utc: "UTC",
     gmt: "UTC",
@@ -117,7 +118,7 @@ export function lookupZone(raw) {
     const name = raw.trim().replace(/^the /, "");
     if (name === "local" || name === "here" || name === "local time")
         return "";
-    return own(ZONE_ALIASES, name) || lookupZoneName(name);
+    return own(ZONE_ALIASES, name) || lookupPlace(name) || lookupZoneName(name);
 }
 
 const zoneCache = {};

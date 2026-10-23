@@ -2,6 +2,7 @@ import { conversionAnswer } from "./conversion.mjs";
 import { dateAnswer } from "./dates.mjs";
 import { setReader } from "./files.mjs";
 import { mathAnswer } from "./maths.mjs";
+import { setPlacesPath } from "./places.mjs";
 import { timeAnswer } from "./times.mjs";
 
 export { setRates } from "./currency.mjs";
@@ -24,6 +25,7 @@ export function answer(query, now) {
     return null;
 }
 
-export function setFileReader(read) {
+export function setFileReader(read, placesPath) {
     setReader(read);
+    setPlacesPath(placesPath);
 }

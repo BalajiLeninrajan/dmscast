@@ -23,7 +23,7 @@ QtObject {
         })
     property double fiatTriedAt: 0
 
-    // Reads tz files the first time a query needs them.
+    // Reads the place table and tz files the first time a query needs them.
     property var reader: FileView {
         preload: false
         blockLoading: true
@@ -31,7 +31,7 @@ QtObject {
     }
 
     Component.onCompleted: {
-        Calc.setFileReader(readFile);
+        Calc.setFileReader(readFile, Qt.resolvedUrl("data/places.tsv").toString().replace("file://", ""));
         loadRates();
     }
     onPluginServiceChanged: loadRates()

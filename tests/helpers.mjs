@@ -1,8 +1,9 @@
 import fs from "node:fs";
+import { fileURLToPath } from "node:url";
 import { answer, setFileReader, setRates } from "../src/answer.mjs";
 
 // Same contract as the plugin's FileView reader.
-export function read(path, binary) {
+function read(path, binary) {
     try {
         const b = fs.readFileSync(path);
         return binary ? b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) : b.toString("utf8");
@@ -11,7 +12,7 @@ export function read(path, binary) {
     }
 }
 
-setFileReader(read);
+setFileReader(read, fileURLToPath(new URL("../data/places.tsv", import.meta.url)));
 setRates({
     USD: 1.08,
     CAD: 1.5,
@@ -31,3 +32,5 @@ export function title(query, now = NOW) {
     const result = answer(query, now);
     return result && result.title;
 }
+
+export { read };
