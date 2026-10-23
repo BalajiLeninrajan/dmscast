@@ -30,7 +30,7 @@ DMS lists plugin results below applications, so Enter launches a matching app in
 
 - Arithmetic, percentages, units and bases are parsed in `calc.js`. It never calls `eval`. Numbers are 64-bit floats shown to 10 significant digits.
 - Currency uses the European Central Bank's daily reference rates from [Frankfurter](https://frankfurter.dev), 30 currencies, refreshed every 6 hours. The last rates are kept for offline use.
-- Times come from `date`, so daylight saving follows the system tz database. Place names resolve through `data/places.tsv`: about 62,000 city names and airport codes. When two places share a name, the more populous one wins.
+- Times are read from the system tz database, the same files `date` uses, so daylight saving stays as current as the system. Place names resolve through `data/places.tsv`: about 62,000 city names and airport codes. When two places share a name, the more populous one wins. The place table and tz files load the first time a query names a place.
 
 ## Rebuilding the place table
 
