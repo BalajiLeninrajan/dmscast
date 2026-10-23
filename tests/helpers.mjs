@@ -1,4 +1,15 @@
+import fs from "node:fs";
 import { answer, setRates } from "../src/answer.mjs";
+
+// Same contract as the plugin's FileView reader.
+export function read(path, binary) {
+    try {
+        const b = fs.readFileSync(path);
+        return binary ? b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) : b.toString("utf8");
+    } catch (e) {
+        return "";
+    }
+}
 
 setRates({
     USD: 1.08,

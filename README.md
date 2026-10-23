@@ -45,6 +45,8 @@ The same modules run under Node, so the tests do too:
 pnpm test
 ```
 
+The time zone tests compare against Python's `zoneinfo` for a set of zones with unusual rules. `ALL_ZONES=1 pnpm test` checks every zone in `zone.tab`, which is slower.
+
 ## Limits
 
 - No compound or mixed units (`5 km / 2 h`, `5 ft 3 in`), and no free text (`$20 lunch + $15 taxi`).
