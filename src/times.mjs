@@ -1,4 +1,4 @@
-import { dayOf, formatDay } from "./dates.mjs";
+import { dayOf, formatDate } from "./dates.mjs";
 import { parseTzif, wallToUtc, zoneAt } from "./tzif.mjs";
 
 // Clock times in other zones: "time in tokyo", "3pm pst to london". Place
@@ -296,7 +296,7 @@ export function timeAnswer(raw, now) {
     const hour = d.getUTCHours();
     return {
         title: (hour % 12 || 12) + ":" + pad2(d.getUTCMinutes()) + " " + (hour < 12 ? "AM" : "PM") + " " + type.name,
-        subtitle: formatDay(dayOf(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate()), false) + " · " + label,
+        subtitle: formatDate(d, false) + " · " + label,
         icon: "schedule"
     };
 }

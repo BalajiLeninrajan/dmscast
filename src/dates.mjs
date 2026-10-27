@@ -35,11 +35,15 @@ export function daysInMonth(y, m) {
     return new Date(Date.UTC(y, m, 0)).getUTCDate();
 }
 
-// "Friday, 8 October 2027", or "Friday, 8 October" without the year.
-export function formatDay(day, withYear = true) {
-    const date = civil(day);
-    const text = WEEKDAYS[weekdayOf(day)] + ", " + date[2] + " " + capitalize(MONTHS[date[1] - 1]);
-    return withYear ? text + " " + date[0] : text;
+// "Friday, 8 October 2027", or "Friday, 8 October" without the year, for
+// the UTC date of d.
+export function formatDate(d, withYear = true) {
+    const text = WEEKDAYS[d.getUTCDay()] + ", " + d.getUTCDate() + " " + capitalize(MONTHS[d.getUTCMonth()]);
+    return withYear ? text + " " + d.getUTCFullYear() : text;
+}
+
+function formatDay(day) {
+    return formatDate(new Date(day * DAY_MS));
 }
 
 // "oct", "october" and "octob" are all October. Two letters are too few.
