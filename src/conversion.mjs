@@ -51,14 +51,16 @@ function convert(lhs, rhs) {
     // The amount ends at a digit, ")" or "%" and the unit is whatever
     // follows, except for currency symbols, which come first.
     let amountText, unitText;
-    const prefixed = CURRENCY_PREFIX.exec(lhs);
-    const suffixed = /^(.*[\d).%])\s*([^\d\s()][^()]*?)$/.exec(lhs);
-    if (prefixed)
-        [unitText, amountText] = [prefixed[1], prefixed[2]];
-    else if (suffixed)
-        [amountText, unitText] = [suffixed[1], suffixed[2]];
-    else
+    let m = CURRENCY_PREFIX.exec(lhs);
+    if (m) {
+        unitText = m[1];
+        amountText = m[2];
+    } else if ((m = /^(.*[\d).%])\s*([^\d\s()][^()]*?)$/.exec(lhs))) {
+        amountText = m[1];
+        unitText = m[2];
+    } else {
         return null;
+    }
     const from = lookupUnit(unitText) || lookupCurrency(unitText);
     const amount = evaluate(amountText);
     if (!from || amount === null || from.category !== to.category)

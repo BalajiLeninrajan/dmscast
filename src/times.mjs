@@ -81,7 +81,7 @@ export function timeAnswer(raw, now) {
     const hour = d.getUTCHours();
     return {
         title: (hour % 12 || 12) + ":" + pad2(d.getUTCMinutes()) + " " + (hour < 12 ? "AM" : "PM") + " " + type.name,
-        subtitle: formatDay(dayIn(target, t), false) + " · " + label,
+        subtitle: formatDay(dayOf(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate()), false) + " · " + label,
         icon: "schedule"
     };
 }

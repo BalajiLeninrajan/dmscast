@@ -22,7 +22,8 @@ function parseDate(input, today, preferFuture) {
     if (tokens.length === 0 || tokens.length > 3)
         return null;
     let month = 0, day = 0, year = 0;
-    for (const token of tokens) {
+    for (let i = 0; i < tokens.length; i++) {
+        const token = tokens[i];
         const named = monthFromName(token);
         if (named) {
             if (month)
@@ -59,12 +60,12 @@ function parseDate(input, today, preferFuture) {
 }
 
 function addMonths(day, months) {
-    const [y, m, d] = civil(day);
-    const total = y * 12 + (m - 1) + months;
-    const ny = Math.floor(total / 12);
-    const nm = total - ny * 12 + 1;
+    const date = civil(day);
+    const total = date[0] * 12 + (date[1] - 1) + months;
+    const y = Math.floor(total / 12);
+    const m = total - y * 12 + 1;
     // Jan 31 + 1 month lands on the last day of February, not in March.
-    return dayOf(ny, nm, Math.min(d, daysInMonth(ny, nm)));
+    return dayOf(y, m, Math.min(date[2], daysInMonth(y, m)));
 }
 
 const SPAN_DAYS = {
@@ -80,9 +81,9 @@ function addSpan(day, count, unit) {
 }
 
 function stripAny(text, prefixes) {
-    for (const p of prefixes) {
-        if (text.startsWith(p))
-            return text.slice(p.length).trim();
+    for (let i = 0; i < prefixes.length; i++) {
+        if (text.startsWith(prefixes[i]))
+            return text.slice(prefixes[i].length).trim();
     }
     return null;
 }

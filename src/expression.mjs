@@ -59,12 +59,15 @@ const RADIX_DIGITS = {
     2: /^[01]+$/
 };
 
+function token(kind, value) {
+    return {
+        kind: kind,
+        value: value
+    };
+}
+
 function tokenize(src) {
     const tokens = [];
-    const push = (kind, value) => tokens.push({
-            kind: kind,
-            value: value
-        });
     let depth = 0;
     let i = 0;
     while (i < src.length) {
@@ -78,36 +81,36 @@ function tokenize(src) {
             const radix = RADIX[m[1].toLowerCase()];
             if (!RADIX_DIGITS[radix].test(m[2]))
                 return null;
-            push("num", parseInt(m[2], radix));
+            tokens.push(token("num", parseInt(m[2], radix)));
             i += m[0].length;
             continue;
         }
         // "1,000,000", but only outside parentheses, where "," separates
         // function arguments: max(100,200).
         if (depth === 0 && (m = /^\d{1,3}(?:,\d{3})+(?:\.\d+)?(?![\d,])/.exec(rest))) {
-            push("num", parseFloat(m[0].replace(/,/g, "")));
+            tokens.push(token("num", parseFloat(m[0].replace(/,/g, ""))));
             i += m[0].length;
             continue;
         }
         if ((m = /^(\d+(\.\d*)?|\.\d+)(e[+-]?\d+)?/i.exec(rest))) {
-            push("num", parseFloat(m[0]));
+            tokens.push(token("num", parseFloat(m[0])));
             i += m[0].length;
             continue;
         }
         if (rest.startsWith("**")) {
-            push("op", "^");
+            tokens.push(token("op", "^"));
             i += 2;
             continue;
         }
         // "1920 x 1080" and "1920x1080" are how people type multiplication.
         if (/^x(?![a-z])/i.test(rest)) {
-            push("op", "*");
+            tokens.push(token("op", "*"));
             i += 1;
             continue;
         }
         if ((m = /^[a-zπ][a-z0-9]*/i.exec(rest))) {
             const word = m[0].toLowerCase();
-            push(word === "of" || word === "mod" ? "op" : "ident", word);
+            tokens.push(token(word === "of" || word === "mod" ? "op" : "ident", word));
             i += m[0].length;
             continue;
         }
@@ -118,7 +121,7 @@ function tokenize(src) {
             depth++;
         else if (c === ")")
             depth--;
-        push("op", OPERATORS[c]);
+        tokens.push(token("op", OPERATORS[c]));
         i += 1;
     }
     return tokens;

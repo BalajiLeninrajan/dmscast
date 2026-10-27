@@ -146,11 +146,11 @@ for (const [category, factor, names] of UNIT_DEFS) {
 export function lookupUnit(raw) {
     const name = raw.trim().replace(/\s+/g, " ");
     const lower = name.toLowerCase();
-    for (const t of TEMPERATURES) {
-        if (t.names.indexOf(lower) >= 0)
+    for (let i = 0; i < TEMPERATURES.length; i++) {
+        if (TEMPERATURES[i].names.indexOf(lower) >= 0)
             return {
                 category: "temperature",
-                temp: t
+                temp: TEMPERATURES[i]
             };
     }
     return UNITS_EXACT[name] || UNITS_LOWER[lower] || null;

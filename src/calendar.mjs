@@ -33,9 +33,9 @@ export function daysInMonth(y, m) {
 
 // "Friday, 8 October 2027", or "Friday, 8 October" without the year.
 export function formatDay(day, withYear = true) {
-    const [y, m, d] = civil(day);
-    const text = WEEKDAYS[weekdayOf(day)] + ", " + d + " " + capitalize(MONTHS[m - 1]);
-    return withYear ? text + " " + y : text;
+    const date = civil(day);
+    const text = WEEKDAYS[weekdayOf(day)] + ", " + date[2] + " " + capitalize(MONTHS[date[1] - 1]);
+    return withYear ? text + " " + date[0] : text;
 }
 
 // "oct", "october" and "octob" are all October. Two letters are too few.

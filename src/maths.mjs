@@ -28,15 +28,16 @@ const PERCENT_PHRASES = [
 ];
 
 function percentPhrase(text) {
-    for (const [pattern, fn, suffix] of PERCENT_PHRASES) {
-        const m = pattern.exec(text);
+    for (let i = 0; i < PERCENT_PHRASES.length; i++) {
+        const phrase = PERCENT_PHRASES[i];
+        const m = phrase[0].exec(text);
         if (!m)
             continue;
         const a = evaluate(m[1]);
         const b = evaluate(m[2]);
-        const result = a === null || b === null ? null : formatNumber(fn(a, b));
+        const result = a === null || b === null ? null : formatNumber(phrase[1](a, b));
         if (result !== null)
-            return result + suffix;
+            return result + phrase[2];
     }
     return null;
 }
