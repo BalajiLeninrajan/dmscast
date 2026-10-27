@@ -1,4 +1,4 @@
-import { DAY_SECONDS, dayOf, daysInMonth, weekdayOf } from "./calendar.mjs";
+import { DAY_SECONDS, dayOf, daysInMonth, weekdayOf } from "./dates.mjs";
 
 // Zone rules from the system tz database, read straight from the TZif files
 // `date` uses. Times here are seconds since the epoch; offsets are seconds

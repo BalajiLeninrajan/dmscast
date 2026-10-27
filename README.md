@@ -38,10 +38,12 @@ DMS lists plugin results below applications, so Enter launches a matching app in
 
 | Module | Answers |
 |---|---|
-| `maths.mjs`, `expression.mjs` | arithmetic and percentages |
-| `conversion.mjs`, `units.mjs`, `currency.mjs` | `X to Y` for units, bases and currencies |
-| `dates.mjs`, `calendar.mjs` | days until and since, spans from today |
-| `times.mjs`, `zones.mjs`, `places.mjs`, `tzif.mjs` | clock times, and the zone a place name means |
+| `maths.mjs` | arithmetic and percentages |
+| `conversion.mjs` | `X to Y` for units, bases and currencies |
+| `dates.mjs` | days until and since, spans from today |
+| `times.mjs`, `tzif.mjs` | clock times, and the zone a place name means |
+
+Quickshell takes a few milliseconds to load each file, so the split stops at one module per kind of answer. Thirteen smaller modules made the plugin load 50% slower than one file.
 
 The same modules run under Node, so the tests do too:
 

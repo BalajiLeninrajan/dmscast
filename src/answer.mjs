@@ -1,11 +1,10 @@
 import { conversionAnswer } from "./conversion.mjs";
 import { dateAnswer } from "./dates.mjs";
-import { setReader } from "./files.mjs";
 import { mathAnswer } from "./maths.mjs";
-import { setPlacesPath } from "./places.mjs";
 import { timeAnswer } from "./times.mjs";
 
-export { setRates } from "./currency.mjs";
+export { setRates } from "./conversion.mjs";
+export { setFileReader } from "./times.mjs";
 
 // Answers for the launcher's search box. Each answerer returns
 // { title, subtitle, icon } or null; answer() returns the first hit, and
@@ -28,9 +27,4 @@ export function answer(query, now) {
             return result;
     }
     return null;
-}
-
-export function setFileReader(read, placesPath) {
-    setReader(read);
-    setPlacesPath(placesPath);
 }

@@ -1,5 +1,67 @@
-import { civil, dayOf, daysInMonth, formatDay, monthFromName, today as todayOf } from "./calendar.mjs";
-import { plural } from "./format.mjs";
+// Calendar arithmetic: "days until october 8", "days since january 1",
+// "30 days from now", "in 3 months". tzif.mjs and times.mjs share the
+// day-number helpers.
+
+// ---------------------------------------------------------------- calendar
+
+// Days are counted from the Unix epoch and built from a calendar date, never
+// from a timestamp, so "days until" can't trip over time zones or DST.
+
+export const DAY_SECONDS = 86400;
+const DAY_MS = DAY_SECONDS * 1000;
+const MONTHS = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+export function dayOf(y, m, d) {
+    return Math.round(Date.UTC(y, m - 1, d) / DAY_MS);
+}
+
+function todayOf(now) {
+    return dayOf(now.getFullYear(), now.getMonth() + 1, now.getDate());
+}
+
+// [year, month, day] for a day number.
+function civil(day) {
+    const d = new Date(day * DAY_MS);
+    return [d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate()];
+}
+
+// 0 is Sunday. 1 January 1970 was a Thursday.
+export function weekdayOf(day) {
+    return ((day + 4) % 7 + 7) % 7;
+}
+
+export function daysInMonth(y, m) {
+    return new Date(Date.UTC(y, m, 0)).getUTCDate();
+}
+
+// "Friday, 8 October 2027", or "Friday, 8 October" without the year.
+export function formatDay(day, withYear = true) {
+    const date = civil(day);
+    const text = WEEKDAYS[weekdayOf(day)] + ", " + date[2] + " " + capitalize(MONTHS[date[1] - 1]);
+    return withYear ? text + " " + date[0] : text;
+}
+
+// "oct", "october" and "octob" are all October. Two letters are too few.
+function monthFromName(token) {
+    if (token.length < 3)
+        return 0;
+    for (let i = 0; i < MONTHS.length; i++) {
+        if (MONTHS[i].startsWith(token))
+            return i + 1;
+    }
+    return 0;
+}
+
+function plural(n, unit) {
+    return n + " " + unit + (n === 1 ? "" : "s");
+}
+
+function capitalize(word) {
+    return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
+// ----------------------------------------------------------------- answers
 
 // "days until march 1" means the next 1 March; "days since march 1" the last
 // one. Resolving bare dates this way keeps either answer from going negative.
